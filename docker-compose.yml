@@ -1,6 +1,22 @@
 version: '3'
 
+volumes:
+  pikada_postgres_data: {}
+
 services:
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/api/Dockerfile
+    image: pikada_api
+    depends_on:
+      - db
+    command: bash -c "python api/manage.py migrate && python api/manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+
   db:
     image: postgres
     environment:
@@ -8,20 +24,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     volumes:
-      - ./database:/var/lib/postgresql/data
+      - pikada_postgres_data:/var/lib/postgresql/data
     ports:
       - 5432:5432
     expose:
       - "5432"
-  app:
-    build:
-      dockerfile: ./docker/api/Dockerfile
-      context: .
-    image: pikada_api
-    command: python api/manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/app
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
